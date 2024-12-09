@@ -1,3 +1,53 @@
+# Contributor: Benjamin D. Simon and Katie Merriman
+# Email: air@nih.gov
+# Nov 26, 2024
+#
+# By downloading or otherwise receiving the SOFTWARE, RECIPIENT may 
+# use and/or redistribute the SOFTWARE, with or without modification, 
+# subject to RECIPIENT’s agreement to the following terms:
+# 
+# 1. THE SOFTWARE SHALL NOT BE USED IN THE TREATMENT OR DIAGNOSIS 
+# OF CANINE OR HUMAN SUBJECTS.  RECIPIENT is responsible for 
+# compliance with all laws and regulations applicable to the use 
+# of the SOFTWARE.
+# 
+# 2. The SOFTWARE that is distributed pursuant to this Agreement 
+# has been created by United States Government employees. In 
+# accordance with Title 17 of the United States Code, section 105, 
+# the SOFTWARE is not subject to copyright protection in the 
+# United States.  Other than copyright, all rights, title and 
+# interest in the SOFTWARE shall remain with the PROVIDER.   
+# 
+# 3.	RECIPIENT agrees to acknowledge PROVIDER’s contribution and 
+# the name of the author of the SOFTWARE in all written publications 
+# containing any data or information regarding or resulting from use 
+# of the SOFTWARE. 
+# 
+# 4.	THE SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED 
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT 
+# ARE DISCLAIMED. IN NO EVENT SHALL THE PROVIDER OR THE INDIVIDUAL DEVELOPERS 
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF 
+# THE POSSIBILITY OF SUCH DAMAGE.  
+# 
+# 5.	RECIPIENT agrees not to use any trademarks, service marks, trade names, 
+# logos or product names of NCI or NIH to endorse or promote products derived 
+# from the SOFTWARE without specific, prior and written permission.
+# 
+# 6.	For sake of clarity, and not by way of limitation, RECIPIENT may add its 
+# own copyright statement to its modifications or derivative works of the SOFTWARE 
+# and may provide additional or different license terms and conditions in its 
+# sublicenses of modifications or derivative works of the SOFTWARE provided that 
+# RECIPIENT’s use, reproduction, and distribution of the SOFTWARE otherwise complies 
+# with the conditions stated in this Agreement. Whenever Recipient distributes or 
+# redistributes the SOFTWARE, a copy of this Agreement must be included with 
+# each copy of the SOFTWARE.
+
 import SimpleITK as sitk
 import numpy as np
 import csv
@@ -8,19 +58,17 @@ from scipy.ndimage import label
 class EPEdetector:
     def __init__(self):
 
-        local = 1
         self.threshold1 = 0.35  # threshold for lesion mask is 0.6344772701607316 , previously tried .35
         self.threshold2 = 0.45
         self.threshold3 = 0.55
         self.threshold4 = 0.65
         self.testNum = 'test'
 
-        if local:
-            self.mask_folder = r'T:\MIP\Katie_Merriman\Project2bData\monai_output'
-            self.fileName1 = os.path.join(os.path.dirname(self.mask_folder), "AllLesionData_intersection.csv")
-        else:
-            self.mask_folder = 'merrimankm/Project2bData/monai_output'
-            self.fileName1 = os.path.join(os.path.dirname(self.mask_folder), "AllLesionData_remote_intersection.csv")
+        ### Set Path to Folder Containing Monai Output Masks
+        self.mask_folder = "path/to/monai_output"
+
+        ### Set Path to 
+        self.fileName1 = "lesion_data.csv"
 
     def getEPEdata(self):
 
@@ -35,11 +83,10 @@ class EPEdetector:
 
         file.close()
 
+        ### Set Accoriing to naming convention SURG-00X with range accordingly
+        for p in reversed(range(1, 635)):
 
-        #for p in reversed(range(1, 635)):
-        for p in reversed(range(401, 402)):
-
-            # patient name should follow format 'SURG-00X'
+            # Patient name should follow format 'SURG-00X'
             patient = 'SURG-' + str(p + 1000)[1:]
             print(patient)
 
@@ -48,19 +95,13 @@ class EPEdetector:
                 prostImg = sitk.ReadImage(prostPath)
                 prostArr = sitk.GetArrayFromImage(prostImg)
 
-                flippedProstPath = os.path.join(self.mask_folder, patient, 'wp_bt_undilated-Flipped.nii.gz')
-                flippedProstImg = sitk.ReadImage(flippedProstPath)
-                flippedProstArr = sitk.GetArrayFromImage(flippedProstImg)
-
-                asymmetry = np.sum(flippedProstArr != prostArr) / len(prostArr.nonzero()[0])
-                print("asymmetry:", asymmetry)
                 spacing = prostImg.GetSpacing()
 
                 file = open(self.fileName1, 'a+', newline='')
                 # writing the data into the file
                 with file:
                     write = csv.writer(file)
-                    write.writerows([[patient, asymmetry, spacing]])
+                    write.writerows([[patient, spacing]])
                 file.close()
 
                 prostEdgeImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_prostEdge.nii.gz"))
@@ -76,21 +117,6 @@ class EPEdetector:
                 varZoneImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_bt_fullVarZone.nii.gz"))
                 varZoneArr = sitk.GetArrayFromImage(varZoneImg)
 
-                flippedProstEdgeImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_prostEdge-Flipped.nii.gz"))
-                flippedProstEdgeArr = sitk.GetArrayFromImage(flippedProstEdgeImg)
-                flippedVarImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_fullVar-Flipped.nii.gz"))
-                flippedVarArr = sitk.GetArrayFromImage(flippedVarImg)
-                flippedVarEdgeImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_outsideVarEdge-Flipped.nii.gz"))
-                flippedVarEdgeArr = sitk.GetArrayFromImage(flippedVarEdgeImg)
-                flippedInsideImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_bt_inside-Flipped.nii.gz"))
-                flippedInsideArr = sitk.GetArrayFromImage(flippedInsideImg)
-                flippedInsideEdgeImg = sitk.ReadImage(os.path.join(self.mask_folder, patient, "wp_insideVarEdge-Flipped.nii.gz"))
-                flippedInsideEdgeArr = sitk.GetArrayFromImage(flippedInsideEdgeImg)
-                flippedVarZoneImg = sitk.ReadImage(os.path.join(self.mask_folder, patient,
-                                                                "wp_bt_fullVarZone-Flipped.nii.gz"))
-                flippedVarZoneArr = sitk.GetArrayFromImage(flippedVarZoneImg)
-
-
                 self.createBinaryLesions(patient)
                 print("binaries created")
 
@@ -98,24 +124,15 @@ class EPEdetector:
                 lesionArr = sitk.GetArrayFromImage(lesionMask)
 
 
-
                 print("beginning data calculation")
                 self.lesionData(patient, prostArr, prostEdgeArr, varArr, varEdgeArr,
                                 insideArr, insideEdgeArr, lesionArr, varZoneArr, "1", "orig")
-                self.lesionData(patient, flippedProstArr, flippedProstEdgeArr, flippedVarArr, flippedVarEdgeArr,
-                                flippedInsideArr, flippedInsideEdgeArr, lesionArr, flippedVarZoneArr, "1", "flipped")
                 self.lesionData(patient, prostArr, prostEdgeArr, varArr, varEdgeArr,
                                 insideArr, insideEdgeArr, lesionArr, varZoneArr, "2", "orig")
-                self.lesionData(patient, flippedProstArr, flippedProstEdgeArr, flippedVarArr, flippedVarEdgeArr,
-                                flippedInsideArr, flippedInsideEdgeArr, lesionArr, flippedVarZoneArr, "2", "flipped")
                 self.lesionData(patient, prostArr, prostEdgeArr, varArr, varEdgeArr,
                                 insideArr, insideEdgeArr, lesionArr, varZoneArr, "3", "orig")
-                self.lesionData(patient, flippedProstArr, flippedProstEdgeArr, flippedVarArr, flippedVarEdgeArr,
-                                flippedInsideArr, flippedInsideEdgeArr, lesionArr, flippedVarZoneArr, "3", "flipped")
                 self.lesionData(patient, prostArr, prostEdgeArr, varArr, varEdgeArr,
                                 insideArr, insideEdgeArr, lesionArr, varZoneArr, "4", "orig")
-                self.lesionData(patient, flippedProstArr, flippedProstEdgeArr, flippedVarArr, flippedVarEdgeArr,
-                                flippedInsideArr, flippedInsideEdgeArr, lesionArr, flippedVarZoneArr, "4", "flipped")
 
             except RuntimeError:
                 print("remote error")
@@ -128,16 +145,15 @@ class EPEdetector:
         return
 
     def createEdge(self, patient, prost, prostArr, suffix):
-        # leaving this as function of EPEdetector to allow easy integration of self.savefolder later
 
         arr_shape = prostArr.shape
         prostNZ = prostArr.nonzero()  # saved as tuple in z,y,x order
         capsule = np.zeros(arr_shape, dtype=int)
 
-        # find array of x,y,z tuples corresponding to voxels of prostNZ that are on edge of prostate array
+        # Find array of x,y,z tuples corresponding to voxels of prostNZ that are on edge of prostate array
         # and also adjacent to lesion voxels outside of prostate
         for prostVoxel in range(len(prostNZ[0])):
-            # if voxel above or below current voxel is 0, voxel is on the edge
+            # If voxel above or below current voxel is 0, voxel is on the edge
             # if that voxel contains lesion, voxel is portion of capsule with lesion contact
             if (prostNZ[0][prostVoxel] - 1) > -1:
                 if prostArr[prostNZ[0][prostVoxel] - 1, prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] == 0:
@@ -145,14 +161,14 @@ class EPEdetector:
             if (prostNZ[0][prostVoxel]) < (arr_shape[0] - 1):
                 if prostArr[prostNZ[0][prostVoxel] + 1, prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] == 0:
                     capsule[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] = 1
-                # if voxel anterior or posterior of current voxel is 0, voxel is on the edge
+            # if voxel anterior or posterior of current voxel is 0, voxel is on the edge
             if (prostNZ[1][prostVoxel] - 1) > -1:
                 if prostArr[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel] - 1, prostNZ[2][prostVoxel]] == 0:
                     capsule[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] = 1
             if (prostNZ[1][prostVoxel]) < (arr_shape[1] - 1):
                 if prostArr[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel] + 1, prostNZ[2][prostVoxel]] == 0:
                     capsule[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] = 1
-                # if voxel to right or left of current voxel is 0, voxel is on the edge
+            # if voxel to right or left of current voxel is 0, voxel is on the edge
             if (prostNZ[2][prostVoxel] - 1) > -1:
                 if prostArr[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel] - 1] == 0:
                     capsule[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] = 1
@@ -160,8 +176,7 @@ class EPEdetector:
                 if prostArr[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel] + 1] == 0:
                     capsule[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], prostNZ[2][prostVoxel]] = 1
 
-        # save edge mask to folder:
-
+        # save edge mask to folder
         EPEmaskfolder = os.path.join(self.mask_folder, patient, self.testNum)
         if not os.path.exists(EPEmaskfolder):
             os.mkdir(EPEmaskfolder)
@@ -172,25 +187,10 @@ class EPEdetector:
 
         return capsule
 
-    def MaskFlip(self, patient, prost, prostArr, suffix):
-        arr_shape = prostArr.shape
-        prostNZ = prostArr.nonzero()  # saved as tuple in z,y,x order
-        flippedProst = np.zeros(arr_shape, dtype=int)
-        midline = int(round(sum(prostNZ[2]) / len(prostNZ[2])))
-        for prostVoxel in range(len(prostNZ[0])):
-            # if voxel above or below current voxel is 0, voxel is on the edge
-            # if that voxel contains lesion, voxel is portion of capsule with lesion contact
-            flippedProst[prostNZ[0][prostVoxel], prostNZ[1][prostVoxel], (2 * midline - prostNZ[2][prostVoxel])] = 1
-
-        FlippedMaskfolder = os.path.join(self.mask_folder, patient, self.testNum)
-        newname = os.path.join(FlippedMaskfolder, patient + suffix)
-        FlippedMask = sitk.GetImageFromArray(flippedProst)
-        FlippedMask.CopyInformation(prost)
-        sitk.WriteImage(FlippedMask, newname)
-
-        return FlippedMask
 
     def createBinaryLesions(self, patient):
+
+        ### Create Binary Lesions at each threshold
         saveFolder = os.path.join(self.mask_folder, patient, self.testNum)
         if not os.path.exists(saveFolder):
             os.mkdir(saveFolder)
@@ -230,6 +230,9 @@ class EPEdetector:
 
     def lesionData(self, patient, prostArr, prostEdge, varArr, varEdge, insideArr, insideEdge, lesionArr,
                    varianceZoneArr, num, version):
+        
+        ### Aggregate Lesion Masks with respect to variance zone to create final measurements
+
         saveFolder = os.path.join(self.mask_folder, patient, self.testNum)
         allLesions = sitk.ReadImage(os.path.join(saveFolder, patient + '_allLesions_thresh' + num + '.nii.gz'))
         binaryArr = sitk.GetArrayFromImage(allLesions)
@@ -259,30 +262,12 @@ class EPEdetector:
             distfromCapsule = -1
             distfromCapsule_xy = -1
             distfromCapsule_z = -1
-            #xy_distfromCapsule_3D = -1
-            #xy_distfromCapsule_xy = -1
-            #xy_distfromCapsule_z = -1
-            #z_distfromCapsule_3D = -1
-            #z_distfromCapsule_xy = -1
-            #z_distfromCapsule_z = -1
             distfromVar = -1
             distfromVar_xy = -1
             distfromVar_z = -1
-            #xy_distfromVar_3D = -1
-            #xy_distfromVar_xy = -1
-            #xy_distfromVar_z = -1
-            #z_distfromVar_3D = -1
-            #z_distfromVar_xy = -1
-            #z_distfromVar_z = -1
             distInsideCapsule = -1
             distInsideCapsule_xy = -1
             distInsideCapsule_z = -1
-            #xy_distInsideCapsule_3D = -1
-            #xy_distInsideCapsule_xy = -1
-            #xy_distInsideCapsule_z = -1
-            #z_distInsideCapsule_3D = -1
-            #z_distInsideCapsule_xy = -1
-            #z_distInsideCapsule_z = -1
             outsideCapsule = 0
             outsideVarArea = 0
             insideCapsuleArea = 0
@@ -306,24 +291,11 @@ class EPEdetector:
                 outsideProstArr = []
                 insideProstArr = []
                 prostCoordsTemp = []
-                #prostCoordsTemp_xy = []
-                #prostCoordsTemp_z = []
                 prostCoords = []
-                #prostCoords_xy = []
-                #prostCoords_z = []
                 varCoordsTemp = []
-                #varCoordsTemp_xy = []
-                #varCoordsTemp_z = []
                 varCoords = []
-                #varCoords_xy = []
-                #varCoords_z = []
                 insideCoordsTemp = []
-                #insideCoordsTemp_xy = []
-                #insideCoordsTemp_z = []
                 insideCoords = []
-                #insideCoords_xy = []
-                #insideCoords_z = []
-
 
                 # create array of lesion outside of outerVariance zone, prostate, and innerVariance zone respectively,
                 # then create array of edges for those arrays
@@ -395,11 +367,6 @@ class EPEdetector:
 
 
 
-
-
-
-
-
                 ## Find distance away from capsule
                 if outsideCapsuleArea != 0:
                     print('len outsideProstEdge:', len(outsideProstNZ[0]))
@@ -408,12 +375,7 @@ class EPEdetector:
                         min_dist = 256
                         min_dist_xy = 256
                         min_dist_z = 256
-                        #min_xy_dist_3D = 256
-                        #min_xy_dist_xy = 256
-                        #min_xy_dist_z = 256
-                        #min_z_dist_3D = 256
-                        #min_z_dist_xy = 256
-                        #min_z_dist_z = 256
+
                         if vox % 50 == 0:
                             print('vox', vox)
                         for prostVox in range(len(prostEdgeNZ[0])):
@@ -442,17 +404,13 @@ class EPEdetector:
 
                     if outsideVarianceArea != 0:
                         print('len outsideVarEdge:', len(outsideVarNZ[0]))
+
                         # if lesion outside of prostate variance:
                         for vox in range(len(outsideVarNZ[0])):
                             min_dist = 256
                             min_dist_xy = 256
                             min_dist_z = 256
-                            #min_xy_dist_3D = 256
-                            #min_xy_dist_xy = 256
-                            #min_xy_dist_z = 256
-                            #min_z_dist_3D = 256
-                            #min_z_dist_xy = 256
-                            #min_z_dist_z = 256
+
                             if vox % 50 == 0:
                                 print('vox', vox)
                             for prostVox in range(len(varEdgeNZ[0])):
@@ -567,18 +525,6 @@ class EPEdetector:
 
                 print(lesionData)
 
-                #patientData.append(lesionData)
-
-                # if distfromCapsule == -1:
-                    # dist3D = distInsideCapsule
-                    # distXY = distInsideCapsule_xy
-                # else:
-                    # dist3D = distfromCapsule
-                    # distXY = distfromCapsule_xy
-
-                # lesionDataCondensed = ['lesion' + str(val), insideCapsuleArea, outsideCapsuleArea, outsideVarianceArea, dist3D, distXY]
-
-
                 file = open(os.path.join(os.path.dirname(self.mask_folder), 'threshold' + num + version + 'remote.csv'), 'a+',
                             newline='')
                 with file:
@@ -588,10 +534,6 @@ class EPEdetector:
                       distfromVar, distfromVar_xy, distfromVar_z, varCoords,
                       distInsideCapsule, distInsideCapsule_xy, distInsideCapsule_z, insideCoords]])
                 file.close()
-
-
-
-
         return
 
 
